@@ -35,23 +35,17 @@ app.post("/createTodo", async (req: Request, res: Response) => {
   }
 });
 
-// Todoを編集する
-app.put("/editTodo/:id", async (req: Request, res: Response) => {
-  const { title, details, isCompleted } = req.body;
+// Todoを削除する
+app.delete("/deleteTodo/:id", async (req: Request, res: Response) => {
   const id = Number(req.params.id);
 
   try {
-    const editTodo = await prisma.todo.update({
+    const deleteTodo = await prisma.todo.delete({
       where: { id },
-      data: {
-        title,
-        details,
-        isCompleted,
-      },
     });
-    return res.json(editTodo);
+    return res.json(deleteTodo);
   } catch (error) {
-    return res.status(400).json(`Error edit Todo:${error}`);
+    return res.status(500).json(`Error delete Todo:${error}`);
   }
 });
 
