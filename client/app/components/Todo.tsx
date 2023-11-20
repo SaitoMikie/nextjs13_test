@@ -9,13 +9,18 @@ type TodoProps = {
 const Todo = ({ todo }: TodoProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(todo.title);
+  const [BeforeEditingTitle, setBeforeEditingTitle] = useState("");
+  const [editedDetails, setEditedDetails] = useState(todo.details);
   const { todos, isLoading, error, mutate } = useTodos();
 
   const handleEdit = async () => {
     setIsEditing(!isEditing);
     if (isEditing) {
       // titleに何も入力されていなければ処理を行わない
-      if (!editedTitle) return;
+      if (!editedTitle) {
+        setEditedTitle(BeforeEditingTitle);
+        return;
+      }
       const response = await fetch(
         `http://localhost:8080/editTodo/${todo.id}`,
         {
@@ -23,6 +28,7 @@ const Todo = ({ todo }: TodoProps) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title: editedTitle,
+            details: editedDetails,
           }),
         }
       );
@@ -33,6 +39,8 @@ const Todo = ({ todo }: TodoProps) => {
         );
         mutate(updatedTodos);
       }
+    } else {
+      setBeforeEditingTitle(editedTitle);
     }
   };
 
@@ -80,20 +88,36 @@ const Todo = ({ todo }: TodoProps) => {
             />
             <label className="ml-3 block text-gray-900">
               {isEditing ? (
-                <input
-                  type="text"
-                  className="border rounded py-1 px-2"
-                  value={editedTitle}
-                  onChange={(e) => setEditedTitle(e.target.value)}
-                />
+                <div>
+                  <input
+                    type="text"
+                    className="border rounded py-1 px-2"
+                    value={editedTitle}
+                    onChange={(e) => setEditedTitle(e.target.value)}
+                  />
+                  <textarea
+                    className="border rounded py-1 px-2"
+                    value={editedDetails}
+                    onChange={(e) => setEditedDetails(e.target.value)}
+                  />
+                </div>
               ) : (
-                <span
-                  className={`text-lg font-medium mr-2 ${
-                    todo.isCompleted ? "line-through" : ""
-                  }`}
-                >
-                  {todo.title}
-                </span>
+                <div className="flex flex-col">
+                  <span
+                    className={`text-lg font-medium mr-2 ${
+                      todo.isCompleted ? "line-through" : ""
+                    }`}
+                  >
+                    {todo.title}
+                  </span>
+                  <span
+                    className={`text-lg font-medium mr-2 ${
+                      todo.isCompleted ? "line-through" : ""
+                    }`}
+                  >
+                    {todo.details}
+                  </span>
+                </div>
               )}
             </label>
           </div>
