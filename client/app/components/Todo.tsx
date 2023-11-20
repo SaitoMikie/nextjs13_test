@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { TodoType } from "../types";
-import { mutate } from "swr";
+import { useTodos } from "../hooks/useTodos";
 
 type TodoProps = {
   todo: TodoType;
@@ -9,6 +9,7 @@ type TodoProps = {
 const Todo = ({ todo }: TodoProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(todo.title);
+  const { todos, isLoading, error, mutate } = useTodos();
 
   const handleEdit = async () => {
     setIsEditing(!isEditing);
@@ -27,8 +28,42 @@ const Todo = ({ todo }: TodoProps) => {
       );
       if (response.ok) {
         const newEdit = await response.json();
-        mutate([editedTitle, newEdit]);
+        const updatedTodos = todos.map((todo: TodoType) =>
+          todo.id === newEdit.id ? newEdit : todo
+        );
+        mutate(updatedTodos);
       }
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    const response = await fetch(
+      `http://localhost:8080/deleteTodo/${todo.id}`,
+      {
+        method: "DELETE",
+      }
+    );
+    if (response.ok) {
+      const deletedTodo = await response.json();
+      const updatedTodos = todos.filter((todo: TodoType) => todo.id !== id);
+      mutate(updatedTodos);
+    }
+  };
+
+  const toggletodoCompletion = async (id: number, isCompleted: boolean) => {
+    const response = await fetch(`http://localhost:8080/editTodo/${todo.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        isCompleted: !isCompleted,
+      }),
+    });
+    if (response.ok) {
+      const newEdit = await response.json();
+      const updatedTodos = todos.map((todo: TodoType) =>
+        todo.id === newEdit.id ? newEdit : todo
+      );
+      mutate(updatedTodos);
     }
   };
   return (
@@ -40,6 +75,7 @@ const Todo = ({ todo }: TodoProps) => {
               id="todo1"
               name="todo1"
               type="checkbox"
+              onChange={() => toggletodoCompletion(todo.id, todo.isCompleted)}
               className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
             />
             <label className="ml-3 block text-gray-900">
@@ -51,7 +87,13 @@ const Todo = ({ todo }: TodoProps) => {
                   onChange={(e) => setEditedTitle(e.target.value)}
                 />
               ) : (
-                <span className="text-lg font-medium mr-2"> {todo.title} </span>
+                <span
+                  className={`text-lg font-medium mr-2 ${
+                    todo.isCompleted ? "line-through" : ""
+                  }`}
+                >
+                  {todo.title}
+                </span>
               )}
             </label>
           </div>
@@ -62,7 +104,10 @@ const Todo = ({ todo }: TodoProps) => {
             >
               {isEditing ? "Save" : "Edit"}
             </button>
-            <button className="bg-red-500 hover:bg-red-600 text-white font-medium py-1 px-2 rounded">
+            <button
+              onClick={() => handleDelete(todo.id)}
+              className="cursor bg-red-500 hover:bg-red-600 text-white font-medium py-1 px-2 rounded"
+            >
               ✖
             </button>
           </div>

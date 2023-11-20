@@ -1,24 +1,15 @@
 "use client";
 import React from "react";
-import useSWR from "swr";
 import Todo from "./components/Todo";
 import { TodoType } from "./types";
 import { useRef } from "react";
-
-async function fetcher(key: string) {
-  return fetch(key).then((res) => res.json());
-}
+import { useTodos } from "./hooks/useTodos";
 
 export default function Home() {
   const inputTitle = useRef<HTMLInputElement | null>(null);
   const inputDetails = useRef<HTMLInputElement | null>(null);
+  const { todos, isLoading, error, mutate } = useTodos();
 
-  const { data, isLoading, error, mutate } = useSWR(
-    "http://localhost:8080/allTodos",
-    fetcher
-  );
-
-  console.log(data);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // titleに何も入力されていなければ処理を行わない
@@ -36,7 +27,7 @@ export default function Home() {
 
     if (response.ok) {
       const newTodo = await response.json();
-      mutate([...data, newTodo]);
+      mutate([...todos, newTodo]);
       if (inputTitle.current?.value) {
         inputTitle.current.value = "";
       }
@@ -73,7 +64,7 @@ export default function Home() {
         </div>
       </form>
       <ul className="divide-y divide-gray-200 px-4">
-        {data?.map((todo: TodoType) => (
+        {todos?.map((todo: TodoType) => (
           <Todo key={todo.id} todo={todo} />
         ))}
       </ul>
